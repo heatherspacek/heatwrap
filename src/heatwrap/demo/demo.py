@@ -1,6 +1,6 @@
 import dearpygui.dearpygui as dpg
 
-from ..scaffolding import init, app_loop
+from ..scaffolding import app_init, app_loop, WrApp
 
 
 def frame_loop():
@@ -15,7 +15,7 @@ def layout():
 
 
 def demo_application():
-    init()
+    app_init()
 
     layout()
 

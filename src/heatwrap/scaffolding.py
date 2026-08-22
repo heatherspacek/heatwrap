@@ -4,14 +4,18 @@ _n_apps = 0
 
 
 class WrApp:
-    def __init__(self):
+    def __init__(self, layout_fcn, loop_fcn):
         global _n_apps
         _n_apps += 1
         if _n_apps > 1:
             raise RuntimeError("Only one app instance is supported.")
 
+        app_init()
+        layout_fcn()
+        app_loop(loop_fcn)
 
-def init():
+
+def app_init():
     dpg.create_context()
     dpg.create_viewport()
     dpg.setup_dearpygui()
