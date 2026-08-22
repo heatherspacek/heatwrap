@@ -1,5 +1,15 @@
 import dearpygui.dearpygui as dpg
 
+_n_apps = 0
+
+
+class WrApp:
+    def __init__(self):
+        global _n_apps
+        _n_apps += 1
+        if _n_apps > 1:
+            raise RuntimeError("Only one app instance is supported.")
+
 
 def init():
     dpg.create_context()
