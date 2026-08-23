@@ -27,8 +27,12 @@ class NiceListBox:
         self.tag = tag or dpg.generate_uuid()
         self.parent = parent or None
         self.handler_registry = dpg.add_item_handler_registry()
+        self.registry2 = dpg.add_handler_registry()
 
         self._initial_layout()
+
+    def set_title(self, new_title):
+        dpg.set_value("title_text", new_title)
 
     def register_and_move_child(self, child: NiceListItem):
         self.children.append(child)
@@ -42,27 +46,46 @@ class NiceListBox:
         for c in self.children:
             if c.tag == item:
                 self.apply_style_to_child(c, self.theme_hovered)
+                dpg.configure_item(c.tag, indent=2)
             else:
                 self.apply_style_to_child(c, self.theme_base)
+                dpg.configure_item(c.tag, indent=0)
 
-    def _propagate_click(self, _, item):
-        print(dpg.get_item_info(item))
+    def _mouse_down(self):
+        click_pos = dpg.get_mouse_pos()
+        for c in self.children:
+            base, size = c.extents()
+            if (
+                base[0] < click_pos[0]
+                and base[0] + size[0] >= click_pos[0]
+                and base[1] < click_pos[1]
+                and base[1] + size[1] >= click_pos[1]
+            ):
+                print(c)
+                break
+
+    def _mouse_up(self): ...
 
     def _initial_layout(self):
         dpg.add_item_hover_handler(
             parent=self.handler_registry, callback=self._hover_cbk
         )
+        dpg.add_mouse_down_handler(parent=self.registry2, callback=self._mouse_down)
+        dpg.add_mouse_release_handler(parent=self.registry2, callback=self._mouse_up)
         # dpg.add_item_clicked_handler(
         #     parent=self.handler_registry, callback=self._propagate_click
         # )
-        with dpg.child_window(
-            parent=self.parent or 0,
-            tag=self.tag,
-            height=self.config.panel_h,
-            width=self.config.panel_w,
-            resizable_x=True,
+        with (
+            dpg.child_window(
+                parent=self.parent or 0,
+                tag=self.tag,
+                height=self.config.panel_h,
+                width=self.config.panel_w,
+                resizable_x=True,
+            ),
+            dpg.group(horizontal=True),
         ):
-            pass
+            dpg.add_text("[Placeholder Title]", tag="title_text")
 
     def _setup_themes(self, config: NiceListBoxConfig):
         with dpg.theme() as theme_base, dpg.theme_component(dpg.mvAll):
@@ -81,6 +104,9 @@ class NiceListItem:
     """
     Parentless and staged so they can be registered with
     NiceListBox.register_and_move_child.
+
+    ** FOR REUSABILITY, can we make the layout of this generic or
+    externally-supplied?
     """
 
     def __init__(self, tag=None, config: NiceListBoxConfig = None):
@@ -99,5 +125,10 @@ class NiceListItem:
                         dpg.add_text("Item date-time")
                     dpg.add_button(label="share...")
                     dpg.add_button(label="X")
+
+    def extents(self):
+        base_pos = dpg.get_item_pos(self.tag)
+        shape = dpg.get_item_rect_size(self.tag)
+        return base_pos, shape
 
     def selected_callback(): ...
