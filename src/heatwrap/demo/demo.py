@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from ..scaffolding import app_init, app_loop, WrApp
+from ..widgets import add_dropdown
 
 
 def frame_loop():
@@ -9,9 +10,46 @@ def frame_loop():
         print(fxx)
 
 
+def highlight(_, item):
+    dpg.configure_item(item, indent=10)
+    dpg.bind_item_theme(item, "theme_hovered")
+
+
 def layout():
-    with dpg.window():
-        dpg.add_text("hello world?!")
+
+    with dpg.item_handler_registry(tag="handler1"):
+        dpg.add_item_hover_handler(callback=highlight)
+
+    # darks
+    NORD0 = (46, 52, 64)
+    NORD1 = (59, 66, 82)
+    NORD2 = (67, 76, 94)
+    NORD3 = (76, 86, 106)
+    with dpg.theme(tag="theme_base"):
+        with dpg.theme_component(dpg.mvAll):
+            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, NORD0)
+    dpg.bind_theme("theme_base")  # global
+    with dpg.theme(tag="theme_hovered"):
+        with dpg.theme_component(dpg.mvAll):
+            # dpg.add_theme_color(dpg.mvThemeCol_WindowBg, NORD2)
+            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, NORD2)
+
+    def add_entry(tag):
+        with dpg.child_window(tag=tag, height=55, width=235):
+            with dpg.group(horizontal=True):
+                # dpg.add_image("")
+                dpg.add_text("Label... and ")
+                dpg.add_button(label="dropdown...")
+
+        dpg.bind_item_handler_registry(tag, "handler1")
+
+    with dpg.window(tag="main_win"):
+        dpg.add_menu_bar()
+        with dpg.child_window(tag="sidebar", width=250):
+            add_entry("g1")
+            add_entry("g2")
+            add_entry("g3")
+    dpg.set_primary_window("main_win", True)
 
 
 def demo_application():

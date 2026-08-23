@@ -4,7 +4,7 @@ _n_apps = 0
 
 
 class WrApp:
-    def __init__(self, layout_fcn, loop_fcn):
+    def __init__(self, layout_fcn, loop_fcn, theme=None):
         global _n_apps
         _n_apps += 1
         if _n_apps > 1:
