@@ -10,4 +10,4 @@ class NiceListBoxConfig:
     panel_w: int = 250
     panel_h: int = -1
     item_w: int = -1
-    item_h: int = 55
+    item_h: int = 60
