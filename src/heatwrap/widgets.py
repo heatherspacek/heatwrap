@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+from enum import IntEnum
+
 import dearpygui.dearpygui as dpg
 
 from .config import NiceListBoxConfig
@@ -8,6 +11,13 @@ NORD0 = (46, 52, 64)
 NORD1 = (59, 66, 82)
 NORD2 = (67, 76, 94)
 NORD3 = (76, 86, 106)
+
+
+class SelectionState(IntEnum):
+    BASE = 0
+    HOVER = 1
+    ACTIVE = 2
+    PRIMED = 3
 
 
 class Dropdown: ...
@@ -39,17 +49,30 @@ class NiceListBox:
         dpg.bind_item_handler_registry(child.tag, self.handler_registry)
         dpg.move_item(child.tag, parent=self.tag)
 
+    def apply_state_to_child(self, child: NiceListItem, state: SelectionState):
+        child.state = state
+        dpg.configure_item(child.tag, indent=2 * state)
+        match state:
+            case SelectionState.BASE:
+                self.apply_style_to_child(child, self.theme_base)
+            case SelectionState.HOVER:
+                self.apply_style_to_child(child, self.theme_hovered)
+            case SelectionState.ACTIVE | SelectionState.PRIMED:
+                self.apply_style_to_child(child, self.theme_active)
+
     def apply_style_to_child(self, child: NiceListItem, theme):
         dpg.bind_item_theme(child.tag, theme)
 
     def _hover_cbk(self, _, item):
         for c in self.children:
+            if c.state == SelectionState.PRIMED:
+                continue
+            # --
             if c.tag == item:
-                self.apply_style_to_child(c, self.theme_hovered)
-                dpg.configure_item(c.tag, indent=2)
+                self.apply_state_to_child(c, SelectionState.HOVER)
             else:
-                self.apply_style_to_child(c, self.theme_base)
-                dpg.configure_item(c.tag, indent=0)
+                # BUG: need to preserve the active one...
+                self.apply_state_to_child(c, SelectionState.BASE)
 
     def _mouse_down(self):
         click_pos = dpg.get_mouse_pos()
@@ -61,7 +84,9 @@ class NiceListBox:
                 and base[1] < click_pos[1]
                 and base[1] + size[1] >= click_pos[1]
             ):
-                print(c)
+                for c_other in self.children:
+                    self.apply_state_to_child(c_other, SelectionState.BASE)
+                self.apply_state_to_child(c, SelectionState.PRIMED)
                 break
 
     def _mouse_up(self): ...
@@ -112,6 +137,7 @@ class NiceListItem:
     def __init__(self, tag=None, config: NiceListBoxConfig = None):
         self.tag = tag or dpg.generate_uuid()
         self.config = config or NiceListBoxConfig()
+        self.state = SelectionState(0)
         self._initial_layout()
 
     def _initial_layout(self):
