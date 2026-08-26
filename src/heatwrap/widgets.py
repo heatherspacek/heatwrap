@@ -16,8 +16,8 @@ NORD3 = (76, 86, 106)
 class SelectionState(IntEnum):
     BASE = 0
     HOVER = 1
-    ACTIVE = 2
-    PRIMED = 3
+    PRIMED = 2
+    ACTIVE = 3
 
 
 class Dropdown: ...
@@ -63,20 +63,10 @@ class NiceListBox:
     def apply_style_to_child(self, child: NiceListItem, theme):
         dpg.bind_item_theme(child.tag, theme)
 
-    def _hover_cbk(self, _, item):
-        for c in self.children:
-            if c.state == SelectionState.PRIMED:
-                continue
-            # --
-            if c.tag == item:
-                self.apply_state_to_child(c, SelectionState.HOVER)
-            else:
-                # BUG: need to preserve the active one...
-                self.apply_state_to_child(c, SelectionState.BASE)
-
     def _mouse_down(self):
         click_pos = dpg.get_mouse_pos(local=False)
         for c in self.children:
+            # TODO: cache these for perf! cache invalidation is the hard part.
             base, size = c.global_extents()
             if (
                 base[0] < click_pos[0]
@@ -89,7 +79,44 @@ class NiceListBox:
                 self.apply_state_to_child(c, SelectionState.PRIMED)
                 break
 
-    def _mouse_up(self): ...
+    def _mouse_move(self):
+        mouse = dpg.get_mouse_pos(local=False)
+        for c in self.children:
+            # TODO: cache these for perf! cache invalidation is the hard part.
+            base, size = c.global_extents()
+            if (
+                base[0] < mouse[0]
+                and base[0] + size[0] >= mouse[0]
+                and base[1] < mouse[1]
+                and base[1] + size[1] >= mouse[1]
+            ):
+                for c_other in self.children:
+                    if c_other.state not in [
+                        SelectionState.ACTIVE,
+                        SelectionState.PRIMED,
+                    ]:
+                        self.apply_state_to_child(c_other, SelectionState.BASE)
+                if c.state not in [
+                    SelectionState.ACTIVE,
+                    SelectionState.PRIMED,
+                ]:
+                    self.apply_state_to_child(c, SelectionState.HOVER)
+                break
+
+    def _mouse_up(self):
+        mouse = dpg.get_mouse_pos(local=False)
+        for c in self.children:
+            # TODO: cache these for perf! cache invalidation is the hard part.
+            base, size = c.global_extents()
+            if (
+                base[0] < mouse[0]
+                and base[0] + size[0] >= mouse[0]
+                and base[1] < mouse[1]
+                and base[1] + size[1] >= mouse[1]
+            ):
+                if c.state == SelectionState.PRIMED:
+                    self.apply_state_to_child(c, SelectionState.ACTIVE)
+                break
 
     def _initial_layout(self):
         # dpg.add_item_hover_handler(
@@ -97,8 +124,8 @@ class NiceListBox:
         # )
         dpg.add_mouse_down_handler(parent=self.registry2, callback=self._mouse_down)
         dpg.add_mouse_release_handler(parent=self.registry2, callback=self._mouse_up)
-        dpg.add_mouse_move_handler(parent=self.registry2, callback=None)
-        dpg.add_mouse_drag_handler(parent=self.registry2, callback=None)
+        dpg.add_mouse_move_handler(parent=self.registry2, callback=self._mouse_move)
+        # dpg.add_mouse_drag_handler(parent=self.registry2, callback=None)
 
         with (
             dpg.child_window(
