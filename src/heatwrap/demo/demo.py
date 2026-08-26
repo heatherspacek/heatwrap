@@ -5,9 +5,11 @@ from ..widgets import NiceListBox, NiceListItem
 
 
 def frame_loop():
+    """usable for time-dependent animations, periodic status checks..."""
     fxx = dpg.get_frame_count()
     if fxx % 60 == 0:
-        print(fxx)
+        # print(fxx)
+        ...
 
 
 def layout():
