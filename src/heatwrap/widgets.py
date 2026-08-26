@@ -75,9 +75,9 @@ class NiceListBox:
                 self.apply_state_to_child(c, SelectionState.BASE)
 
     def _mouse_down(self):
-        click_pos = dpg.get_mouse_pos()
+        click_pos = dpg.get_mouse_pos(local=False)
         for c in self.children:
-            base, size = c.extents()
+            base, size = c.global_extents()
             if (
                 base[0] < click_pos[0]
                 and base[0] + size[0] >= click_pos[0]
@@ -92,14 +92,14 @@ class NiceListBox:
     def _mouse_up(self): ...
 
     def _initial_layout(self):
-        dpg.add_item_hover_handler(
-            parent=self.handler_registry, callback=self._hover_cbk
-        )
+        # dpg.add_item_hover_handler(
+        #     parent=self.handler_registry, callback=self._hover_cbk
+        # )
         dpg.add_mouse_down_handler(parent=self.registry2, callback=self._mouse_down)
         dpg.add_mouse_release_handler(parent=self.registry2, callback=self._mouse_up)
-        # dpg.add_item_clicked_handler(
-        #     parent=self.handler_registry, callback=self._propagate_click
-        # )
+        dpg.add_mouse_move_handler(parent=self.registry2, callback=None)
+        dpg.add_mouse_drag_handler(parent=self.registry2, callback=None)
+
         with (
             dpg.child_window(
                 parent=self.parent or 0,
@@ -156,5 +156,21 @@ class NiceListItem:
         base_pos = dpg.get_item_pos(self.tag)
         shape = dpg.get_item_rect_size(self.tag)
         return base_pos, shape
+
+    def global_extents(self):
+        shape = dpg.get_item_rect_size(self.tag)
+
+        global_pos = dpg.get_item_pos(self.tag)
+        level = self.tag
+        while True:
+            level = dpg.get_item_parent(level)
+            if level is None:
+                break
+            additional_pos = dpg.get_item_pos(level)
+            global_pos = (
+                global_pos[0] + additional_pos[0],
+                global_pos[1] + additional_pos[1],
+            )
+        return global_pos, shape
 
     def selected_callback(): ...
