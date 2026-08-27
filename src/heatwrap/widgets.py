@@ -6,12 +6,6 @@ import dearpygui.dearpygui as dpg
 
 from .config import NiceListBoxConfig
 
-# darks
-NORD0 = (46, 52, 64)
-NORD1 = (59, 66, 82)
-NORD2 = (67, 76, 94)
-NORD3 = (76, 86, 106)
-
 
 class SelectionState(IntEnum):
     BASE = 0
@@ -49,6 +43,8 @@ class NiceListBox:
         self.apply_state_to_child(child, SelectionState.BASE)
 
     def apply_state_to_child(self, child: NiceListItem, state: SelectionState):
+        if state == child.state:
+            return
         child.state = state
         dpg.configure_item(child.tag, indent=2 if state == SelectionState.PRIMED else 0)
         match state:
@@ -62,7 +58,6 @@ class NiceListBox:
     def _mouse_down(self):
         click_pos = dpg.get_mouse_pos(local=False)
         for c in self.children:
-            # TODO: cache these for perf! cache invalidation is the hard part.
             base, size = c.global_extents
             if (
                 base[0] < click_pos[0]
@@ -77,8 +72,8 @@ class NiceListBox:
 
     def _mouse_move(self):
         mouse = dpg.get_mouse_pos(local=False)
+        hit_c = None
         for c in self.children:
-            # TODO: cache these for perf! cache invalidation is the hard part.
             base, size = c.global_extents
             if (
                 base[0] < mouse[0]
@@ -86,23 +81,23 @@ class NiceListBox:
                 and base[1] < mouse[1]
                 and base[1] + size[1] >= mouse[1]
             ):
-                for c_other in self.children:
-                    if c_other.state not in [
-                        SelectionState.ACTIVE,
-                        SelectionState.PRIMED,
-                    ]:
-                        self.apply_state_to_child(c_other, SelectionState.BASE)
-                if c.state not in [
-                    SelectionState.ACTIVE,
-                    SelectionState.PRIMED,
-                ]:
-                    self.apply_state_to_child(c, SelectionState.HOVER)
+                hit_c = c
                 break
+
+        for c in self.children:
+            if c.state in [
+                SelectionState.ACTIVE,
+                SelectionState.PRIMED,
+            ]:
+                continue
+            if c is hit_c:
+                self.apply_state_to_child(c, SelectionState.HOVER)
+            else:
+                self.apply_state_to_child(c, SelectionState.BASE)
 
     def _mouse_up(self):
         mouse = dpg.get_mouse_pos(local=False)
         for c in self.children:
-            # TODO: cache these for perf! cache invalidation is the hard part.
             base, size = c.global_extents
             if (
                 base[0] < mouse[0]
