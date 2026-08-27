@@ -55,14 +55,11 @@ class NiceListBox:
         dpg.configure_item(child.tag, indent=2 if state==SelectionState.PRIMED else 0)
         match state:
             case SelectionState.BASE:
-                self.apply_style_to_child(child, self.theme_base)
+                dpg.bind_item_theme(child.tag, self.theme_base)
             case SelectionState.HOVER:
-                self.apply_style_to_child(child, self.theme_hovered)
+                dpg.bind_item_theme(child.tag, self.theme_hovered)
             case SelectionState.ACTIVE | SelectionState.PRIMED:
-                self.apply_style_to_child(child, self.theme_active)
-
-    def apply_style_to_child(self, child: NiceListItem, theme):
-        dpg.bind_item_theme(child.tag, theme)
+                dpg.bind_item_theme(child.tag, self.theme_active)
 
     def _mouse_down(self):
         click_pos = dpg.get_mouse_pos(local=False)
