@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-
+from functools import cached_property
 import dearpygui.dearpygui as dpg
 
 from .config import NiceListBoxConfig
@@ -36,8 +36,7 @@ class NiceListBox:
 
         self.tag = tag or dpg.generate_uuid()
         self.parent = parent or None
-        self.handler_registry = dpg.add_item_handler_registry()
-        self.registry2 = dpg.add_handler_registry()
+        self.handler_registry = dpg.add_handler_registry()
 
         self._initial_layout()
 
@@ -46,13 +45,12 @@ class NiceListBox:
 
     def register_and_move_child(self, child: NiceListItem):
         self.children.append(child)
-        dpg.bind_item_handler_registry(child.tag, self.handler_registry)
         dpg.move_item(child.tag, parent=self.tag)
         self.apply_state_to_child(child, SelectionState.BASE)
 
     def apply_state_to_child(self, child: NiceListItem, state: SelectionState):
         child.state = state
-        dpg.configure_item(child.tag, indent=2 if state==SelectionState.PRIMED else 0)
+        dpg.configure_item(child.tag, indent=2 if state == SelectionState.PRIMED else 0)
         match state:
             case SelectionState.BASE:
                 dpg.bind_item_theme(child.tag, self.theme_base)
@@ -65,7 +63,7 @@ class NiceListBox:
         click_pos = dpg.get_mouse_pos(local=False)
         for c in self.children:
             # TODO: cache these for perf! cache invalidation is the hard part.
-            base, size = c.global_extents()
+            base, size = c.global_extents
             if (
                 base[0] < click_pos[0]
                 and base[0] + size[0] >= click_pos[0]
@@ -81,7 +79,7 @@ class NiceListBox:
         mouse = dpg.get_mouse_pos(local=False)
         for c in self.children:
             # TODO: cache these for perf! cache invalidation is the hard part.
-            base, size = c.global_extents()
+            base, size = c.global_extents
             if (
                 base[0] < mouse[0]
                 and base[0] + size[0] >= mouse[0]
@@ -105,7 +103,7 @@ class NiceListBox:
         mouse = dpg.get_mouse_pos(local=False)
         for c in self.children:
             # TODO: cache these for perf! cache invalidation is the hard part.
-            base, size = c.global_extents()
+            base, size = c.global_extents
             if (
                 base[0] < mouse[0]
                 and base[0] + size[0] >= mouse[0]
@@ -117,13 +115,16 @@ class NiceListBox:
                 break
 
     def _initial_layout(self):
-        # dpg.add_item_hover_handler(
-        #     parent=self.handler_registry, callback=self._hover_cbk
-        # )
-        dpg.add_mouse_down_handler(parent=self.registry2, callback=self._mouse_down)
-        dpg.add_mouse_release_handler(parent=self.registry2, callback=self._mouse_up)
-        dpg.add_mouse_move_handler(parent=self.registry2, callback=self._mouse_move)
-        # dpg.add_mouse_drag_handler(parent=self.registry2, callback=None)
+        dpg.add_mouse_down_handler(
+            parent=self.handler_registry, callback=self._mouse_down
+        )
+        dpg.add_mouse_release_handler(
+            parent=self.handler_registry, callback=self._mouse_up
+        )
+        dpg.add_mouse_move_handler(
+            parent=self.handler_registry, callback=self._mouse_move
+        )
+        # dpg.add_mouse_drag_handler(parent=self.handler_registry, callback=None)
 
         with (
             dpg.child_window(
@@ -182,6 +183,7 @@ class NiceListItem:
         shape = dpg.get_item_rect_size(self.tag)
         return base_pos, shape
 
+    @cached_property
     def global_extents(self):
         shape = dpg.get_item_rect_size(self.tag)
 
