@@ -48,10 +48,11 @@ class NiceListBox:
         self.children.append(child)
         dpg.bind_item_handler_registry(child.tag, self.handler_registry)
         dpg.move_item(child.tag, parent=self.tag)
+        self.apply_state_to_child(child, SelectionState.BASE)
 
     def apply_state_to_child(self, child: NiceListItem, state: SelectionState):
         child.state = state
-        dpg.configure_item(child.tag, indent=2 * state)
+        dpg.configure_item(child.tag, indent=2 if state==SelectionState.PRIMED else 0)
         match state:
             case SelectionState.BASE:
                 self.apply_style_to_child(child, self.theme_base)
