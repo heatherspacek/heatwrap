@@ -128,6 +128,7 @@ class NiceListBox:
                 height=self.config.panel_h,
                 width=self.config.panel_w,
                 resizable_x=True,
+                auto_resize_y=True,
             ),
             dpg.group(horizontal=True),
         ):
