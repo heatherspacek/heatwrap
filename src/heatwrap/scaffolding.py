@@ -18,7 +18,10 @@ class WrApp:
 def app_init():
     dpg.create_context()
     dpg.create_viewport()
+    dpg.set_viewport_vsync(True)
     dpg.setup_dearpygui()
+    # TODO: add a font family specification system!
+    # Attempt to bind system fonts, based on system
 
 
 def app_loop(user_frame_fcn):
